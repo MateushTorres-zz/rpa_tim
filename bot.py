@@ -89,7 +89,7 @@ driver.find_element(By.ID,"tb_-1").click()
 i = 0
 
 for linha in tabela:
-    telefone = linha['NUMERO']
+    telefone = linha['TELEFONES']
     print("# Número: {}".format(telefone))
     i += 1
 
@@ -134,4 +134,3 @@ for linha in tabela:
         driver.find_element(By.ID,"tb_-1").click() 
 
 print(' --------- Fim da Execucao ----------')
-
