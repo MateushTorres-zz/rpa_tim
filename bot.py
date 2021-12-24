@@ -21,12 +21,13 @@ def gravar():
     tabela.to_csv(saida)  
 
 def ler_arquivo(arquivo):
+    numeros=[]
+    
     with open(arquivo) as f:
         csv_reader = csv.DictReader(f, delimiter=',')
     
-    numeros=[]
-    for row in csv_reader:
-        numeros.append( row)
+        for row in csv_reader:
+            numeros.append( row)
         
     return numeros
 
