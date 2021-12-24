@@ -1,10 +1,6 @@
-import os
 import time
-import json
-import pandas as pd
+import csv
 import configparser
-import io
-import subprocess
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -15,15 +11,38 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.common.exceptions import TimeoutException
 
-import traceback #tirar
+# import os
+# import json
+# import io
+# import subprocess
+
+
+def gravar():
+    tabela.to_csv(saida)  
+
+def ler_arquivo(arquivo):
+    with open(arquivo) as f:
+        csv_reader = csv.DictReader(f, delimiter=',')
+    
+    numeros=[]
+    for row in csv_reader:
+        numeros.append( row)
+        
+    return numeros
+
+def gravar_arquivo(arquivo, tabela):
+    keys = tabela[0].keys()
+    with open(arquivo,'w') as f:
+        writer = csv.DictWriter(f, keys)
+        writer.writeheader()
+        writer.writerows(tabela)
+
 
 print( '--------- iniciando ----------')
 GRAVAR_A_CADA = 10
 caminho = ''
 
-def gravar():
-    tabela.to_csv(saida)  
-
+        
 print ('# Lendo config.ini')
 # Load the configuration file
 config = configparser.ConfigParser()
@@ -42,7 +61,8 @@ print('# Endereco', endereco)
 print('# Arquivo', arquivo)
 
 print('# Carregando tabela ' + arquivo)
-tabela = pd.read_excel(arquivo, index_col=0)
+tabela = ler_arquivo(arquivo)
+tabela_saida = []
 
 #opt = Options()
 #opt.add_experimental_option("debuggerAddress", "localhost:7777")
@@ -67,13 +87,14 @@ driver.find_element(By.ID,"tb_-1").click()
 
 i = 0
 
-for index, row in tabela.iterrows():
-    print("# Número: {}".format(index))
+for linha in tabela:
+    telefone = linha['NUMERO']
+    print("# Número: {}".format(telefone))
     i += 1
 
     wait.until(EC.visibility_of_element_located((By.NAME, "s_2_1_16_0")))
     driver.find_element(By.NAME, "s_2_1_16_0").click()
-    driver.find_element(By.NAME, "s_2_1_16_0").send_keys(str(index))
+    driver.find_element(By.NAME, "s_2_1_16_0").send_keys(str(telefone))
     driver.find_element(By.ID,"s_2_1_4_0_Ctrl").click() 
 
     tem_alerta= ""
@@ -96,20 +117,18 @@ for index, row in tabela.iterrows():
         status =  driver.find_element(By.ID,"1TIM_StatusAcesso").text
 
     except Exception as e:
-        print("# Erro ao localizar plano do número {}".format( index))    
+        print("# Erro ao localizar plano do número {}".format( telefone))    
         #traceback.print_exc()
         driver.find_element(By.ID,"tb_-1").click() 
         time.sleep(5)
     else:
-        print( '# Dados capturados ', index, plano, status)
+        print( '# Dados capturados ', telefone, plano, status)
 
-        tabela.at[index, 'Plano'] = plano
-        tabela.at[index, 'Status'] = status
-        tabela.at[index, 'Alerta'] = tem_alerta
+        tabela_saida.append( { 'NUMERO': telefone, 'Plano': plano, 'Status': status, 'Alerta':tem_alerta} )
         
         if i % GRAVAR_A_CADA == 0:
             print('# arquivo gravado.')
-            gravar()
+            gravar_arquivo(saida, tabela_saida)
 
         driver.find_element(By.ID,"tb_-1").click() 
 
